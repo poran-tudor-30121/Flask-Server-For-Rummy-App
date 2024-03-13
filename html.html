@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Image</title>
+</head>
+<body>
+    <form id="uploadForm" action="/process_image" method="post" enctype="multipart/form-data">
+        <input type="file" name="image">
+        <input type="submit" value="Upload Image">
+    </form>
+    <div>
+        <img id="processedImage" src="" alt="Processed Image">
+    </div>
+    <div id="numberColorList">
+        <!-- Number color list will be displayed here -->
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Prevent form submission
+
+            // Create FormData object to send image file
+            var formData = new FormData(this);
+
+            // Fetch processed image and number color list from Flask server
+            fetch('/process_image', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Display processed image
+                document.getElementById('processedImage').src = 'data:image/png;base64,' + data.processed_image;
+
+                // Display number color list
+                var numberColorList = document.getElementById('numberColorList');
+                numberColorList.innerHTML = '<h2>Number-Color List:</h2>';
+                data.number_color_list.forEach(function(item) {
+                    numberColorList.innerHTML += '<p>Number: ' + item[0].trim() + ', Color: ' + item[1] + '</p>';
+                });
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+</html>

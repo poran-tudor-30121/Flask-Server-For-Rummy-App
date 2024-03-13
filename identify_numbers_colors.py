@@ -28,7 +28,7 @@ def identify_numbers_colors(blurred,image, filtered_contours, w_smallest):
                 color = identify_color(hsv_roi)
                 number_color_list.append([number, color])
                 print(f'Numbers in Rectangle: Number {number}, Color: {color}')
-                cv2.imshow('Upper Half', upper_half_roi)
-                cv2.waitKey(0)
+                #cv2.imshow('Upper Half', upper_half_roi)
+                #cv2.waitKey(0)
     return number_color_list
 
