@@ -6,7 +6,7 @@ import numpy as np
 from identify_color import identify_color
 from scipy import ndimage
 
-# Idee pentru data viitoare : fa cumva sa faci Kernel doar daca cifrele sunt prea groase, daca trec de un threshold
+# Data viitoare - github repo , mai multe min contours
 # Load the image
 #image = cv2.imread('remi2.png')   # totu ok :)
 #image = cv2.imread('Inchis-pe-tabla-la-remi-1024x454-1.jpg') #totu ok
