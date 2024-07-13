@@ -5,7 +5,7 @@ import pytesseract
 import numpy as np
 
 # Load the image
-image = cv2.imread('../remi.png')
+image = cv2.imread('../MainApp/poze/remi.png')
 #image = cv2.imread('Inchis-pe-tabla-la-remi-1024x454-1.jpg')
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'  # Update this with your Tesseract installation path
 
