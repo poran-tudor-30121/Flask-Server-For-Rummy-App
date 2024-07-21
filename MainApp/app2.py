@@ -5,8 +5,7 @@ import asyncio
 from werkzeug.utils import secure_filename
 from init_config import initialize_logging, configure_tesseract
 from utilities import group_contours_by_height
-from main_processing import find_rectangular_contours_with_fixed_threshold, process_image_for_all_players, \
-    process_image_for_some_players
+from main_processing import process_image_for_some_players
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'

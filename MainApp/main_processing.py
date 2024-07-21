@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from concurrent.futures import ProcessPoolExecutor
 
 import numpy as np
 from collections import Counter
@@ -7,7 +8,7 @@ from collections import Counter
 import cv2
 from identify_color import identify_color
 from ocr_with_multiple_psms import ocr_with_multiple_psms
-from utilities import group_contours_by_height, draw_rectangles,split_and_rotate_image
+from utilities import group_contours_by_height, draw_rectangles, split_and_rotate_image, show_sections
 from init_config import initialize_logging
 
 
@@ -71,13 +72,13 @@ async def find_rectangular_contours_with_fixed_threshold(image, logger):
     continue_count = 0
     max_number_of_rectangles = 0
     formations = []
+    logger.info(f'Picture being proccesed ')
     for thresh_value in range(100, thresh_max_value, 1):
         if continue_count > 0:
             continue_count -= 1
             if continue_count == 0:
                 break
         _, thresh = cv2.threshold(gray, thresh_value, 255, cv2.THRESH_BINARY)
-        logger.info(f'Currently at : {thresh_value}')
         median = cv2.medianBlur(thresh, 7)
         #cv2.imshow("median", median)
         #cv2.waitKey(0)
@@ -85,7 +86,7 @@ async def find_rectangular_contours_with_fixed_threshold(image, logger):
         contours, _ = cv2.findContours(median, cv2.RETR_LIST, cv2.CHAIN_APPROX_TC89_KCOS)
 
         filtered_contours = [cnt for cnt in contours if
-                             5000 < cv2.contourArea(cnt) < (image.shape[1] * image.shape[0]) / 2]
+                             10000 < cv2.contourArea(cnt) < (image.shape[1] * image.shape[0]) / 2]
 
         rectangular_contours = []
         heights = []
@@ -161,7 +162,7 @@ async def find_rectangular_contours_with_fixed_threshold(image, logger):
 async def process_image_for_all_players(image_path, logger):
 
     image = cv2.imread(image_path)
-    # image = cv2.resize(image, (1980, 1080))
+    #image = cv2.resize(image, (1980, 1080))
     sections = split_and_rotate_image(image)
 
     i = 0
@@ -177,10 +178,12 @@ async def process_image_for_all_players(image_path, logger):
 
 async def process_image_for_some_players(image_path, logger, wanted_sections):
     image = cv2.imread(image_path)
+    #image = cv2.resize(image, (1980, 1080))
     sections = split_and_rotate_image(image)
+    #show_sections(sections)
 
     tasks = []
-    results_map = {section_name: None for section_name in wanted_sections}  # Initialize results_map with wanted_sections
+    results_map = {section_name: None for section_name in wanted_sections}
 
     for section_name in wanted_sections:
         if section_name in sections:

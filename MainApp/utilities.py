@@ -50,10 +50,25 @@ def group_contours_by_height(contours, tolerance):
     # Return the group with the largest number of rectangles and largest area in case of a tie
     return max_size_groups[0] if max_size_groups else []
 def rotate_image(image, angle):
+    # Get the image dimensions
     (h, w) = image.shape[:2]
+    # Calculate the center of the image
     center = (w // 2, h // 2)
+
+    # Compute the rotation matrix
     M = cv2.getRotationMatrix2D(center, angle, 1.0)
-    rotated = cv2.warpAffine(image, M, (w, h))
+    # Compute the bounding box of the new image
+    cos = np.abs(M[0, 0])
+    sin = np.abs(M[0, 1])
+    new_w = int((h * sin) + (w * cos))
+    new_h = int((h * cos) + (w * sin))
+
+    # Adjust the rotation matrix to take into account the translation
+    M[0, 2] += (new_w / 2) - center[0]
+    M[1, 2] += (new_h / 2) - center[1]
+
+    # Perform the rotation
+    rotated = cv2.warpAffine(image, M, (new_w, new_h))
     return rotated
 
 
@@ -68,6 +83,11 @@ def split_and_rotate_image(image):
     }
 
     return sections
+def show_sections(sections):
+    for name, section in sections.items():
+        cv2.imshow(name, section)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
 
 def find_color(original_roi):
