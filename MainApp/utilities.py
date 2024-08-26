@@ -1,12 +1,22 @@
 import cv2
 import numpy as np
-from identify_color import identify_color
+from MainApp.identify_color import identify_color
 
 
 def draw_rectangles(image, rectangles):
     for rect in rectangles:
         x, y, w, h =  cv2.boundingRect(rect)
         cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+
+def draw_contours(image, contours):
+    # Make a copy of the input image to draw on
+    output_image = image.copy()
+
+    # Draw the contours on the image
+    cv2.drawContours(output_image, contours, -1, (0, 255, 0), 2)
+
+    return output_image
 
 
 def get_contour_height(contour):

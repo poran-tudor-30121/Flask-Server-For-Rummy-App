@@ -2,8 +2,6 @@
 
 import cv2
 import pytesseract
-import numpy as np
-from identify_color import identify_color
 
 # Load the image
 image = cv2.imread('../MainApp/poze/remi.png')

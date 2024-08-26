@@ -5,9 +5,8 @@ from collections import Counter
 import cv2
 import numpy as np
 import pytesseract
-import threading
-from identify_color import identify_color
-from ocr_with_multiple_psms import ocr_with_multiple_psms
+from MainApp.identify_color import identify_color
+from MainApp.ocr_with_multiple_psms import ocr_with_multiple_psms
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(message)s')

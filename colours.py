@@ -1,10 +1,7 @@
 import cv2
 import pytesseract
 import numpy as np
-from identify_color import identify_color
-from gamma_correction import gamma_correction
-from scipy import ndimage
-from ocr_with_multiple_psms import ocr_with_multiple_psms
+from MainApp.identify_color import identify_color
 from ocr_with_multiple_psms_first import ocr_with_multiple_psms_first
 from multiple_players import classify_tiles
 

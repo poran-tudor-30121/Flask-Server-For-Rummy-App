@@ -1,14 +1,12 @@
 import asyncio
-import logging
 
 import numpy as np
 from collections import Counter
 
 import cv2
-from identify_color import identify_color
-from ocr_with_multiple_psms import ocr_with_multiple_psms
-from utilities import group_contours_by_height, draw_rectangles, split_and_rotate_image, show_sections
-from init_config import initialize_logging
+from MainApp.identify_color import identify_color
+from MainApp.ocr_with_multiple_psms import ocr_with_multiple_psms
+from utilities import group_contours_by_height, draw_rectangles, split_and_rotate_image, draw_contours
 
 
 def find_color(original_roi):
@@ -34,8 +32,16 @@ def process_divisions_sync(rectangular_contours, original_image, median_adaptive
 
             thresh_roi = median_adaptive[y:y + int(h // 1.5), x_divided:x_divided + w_divided]
             thresh_roi = cv2.resize(thresh_roi, (300, 300))
+           # cv2.imshow("Thresh ROI Adaptive", thresh_roi)
+            #cv2.waitKey(0)
+          #  cv2.destroyAllWindows()
             kernel = np.ones((3, 3), np.uint8)
             thresh_roi = cv2.dilate(thresh_roi, kernel)
+            i = 0
+            cv2.imshow("Thresh ROI Adaptive After Kernel", thresh_roi)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+            i+=1
 
             original_roi = original_image[y:y + int(h // 1.5), x_divided:x_divided + w_divided]
             color = find_color(original_roi)
@@ -54,6 +60,10 @@ def process_divisions_sync(rectangular_contours, original_image, median_adaptive
 
 def find_rectangular_contours_with_fixed_threshold(image, logger):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    #cv2.imshow("Gray", gray)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
+
     numbers_at_positions = []
     thresh_max_value = 255
     max_number_of_rectangles = 0
@@ -61,8 +71,14 @@ def find_rectangular_contours_with_fixed_threshold(image, logger):
 
     for thresh_value in range(100, thresh_max_value, 1):
         _, thresh = cv2.threshold(gray, thresh_value, 255, cv2.THRESH_BINARY)
-        logger.info(f'Currently at : {thresh_value}')
+        #cv2.imshow("Binary Image", thresh)
+       # cv2.waitKey(0)
+        #cv2.destroyAllWindows()
+        #logger.info(f'Currently at : {thresh_value}')
         median = cv2.medianBlur(thresh, 7)
+        #cv2.imshow("Binary Image Median Blurred", thresh)
+        #cv2.waitKey(0)
+        #cv2.destroyAllWindows()
         contours, _ = cv2.findContours(median, cv2.RETR_LIST, cv2.CHAIN_APPROX_TC89_KCOS)
 
         filtered_contours = [cnt for cnt in contours if 5000 < cv2.contourArea(cnt) < (image.shape[1] * image.shape[0]) / 2]
@@ -82,21 +98,42 @@ def find_rectangular_contours_with_fixed_threshold(image, logger):
         if max_number_of_rectangles <= len(rectangular_contours):
             max_number_of_rectangles = len(rectangular_contours)
             formations = rectangular_contours
+            contoursUnf = contours
+            filtered_contoursUnf = filtered_contours
 
     if len(formations) <= 1:
         return []
 
-    #draw_rectangles(image, formations)
+    contours_img = draw_contours(image,contoursUnf)
+   # cv2.imshow("Contours", contours_img)
+   # cv2.waitKey(0)
+  #  cv2.destroyAllWindows()
+
+    filtered_contours_img = draw_contours(image,filtered_contoursUnf)
+    #cv2.imshow("Filtered contours", filtered_contours_img)
+    #cv2.waitKey(0)
+   # cv2.destroyAllWindows()
+
+    draw_rectangles(image, formations)
     #cv2.imshow("Image with rectangles", image)
     #cv2.waitKey(0)
-    #cv2.destroyAllWindows()
+   # cv2.destroyAllWindows()
 
     with ThreadPoolExecutor() as executor:
         futures = []
         for thresh_adaptive_parameter in range(31, 121, 10):
             thresh_adaptive = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, thresh_adaptive_parameter, 2)
+           # cv2.imshow("Thresh Adaptive {thresh_adaptive_parameter}",thresh_adaptive)
+            #cv2.waitKey(0)
+            #cv2.destroyAllWindows()
             blurred_adaptive = cv2.GaussianBlur(thresh_adaptive, (3, 3), 0)
+           # cv2.imshow("Blurred Adaptive {thresh_adaptive_parameter}", blurred_adaptive)
+            #cv2.waitKey(0)
+            #cv2.destroyAllWindows()
             median_adaptive = cv2.medianBlur(blurred_adaptive, 3)
+           # cv2.imshow("Median Adaptive {thresh_adaptive_parameter}", median_adaptive)
+            #cv2.waitKey(0)
+           # cv2.destroyAllWindows()
             futures.append(executor.submit(process_divisions_sync, formations, image, median_adaptive, numbers_at_positions, logger))
 
         for future in futures:
@@ -151,7 +188,7 @@ async def process_image_for_all_players(image_path, logger):
 
     return results_list
 
-from concurrent.futures import ProcessPoolExecutor, as_completed, ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
 
 def process_image_section(section_name, section_image, logger):
@@ -160,6 +197,9 @@ def process_image_section(section_name, section_image, logger):
 async def process_image_for_some_players(image_path, logger, wanted_sections):
     image = cv2.imread(image_path)
     sections = split_and_rotate_image(image)
+    image1 = cv2.resize(image, (1600, 1080))
+    sections1 = split_and_rotate_image(image1)
+    #show_sections(sections1)
 
     results_map = {section_name: None for section_name in wanted_sections}
 

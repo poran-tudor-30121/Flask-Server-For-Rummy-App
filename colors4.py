@@ -1,12 +1,11 @@
 import asyncio
 import logging
 from collections import Counter
-import concurrent.futures
 import cv2
 import numpy as np
-from identify_color import identify_color
+from MainApp.identify_color import identify_color
 import pytesseract
-from ocr_with_multiple_psms import ocr_with_multiple_psms
+from MainApp.ocr_with_multiple_psms import ocr_with_multiple_psms
 
 def draw_rectangles(image, rectangles):
     for rect in rectangles:

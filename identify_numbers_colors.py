@@ -1,8 +1,8 @@
 import cv2
 import pytesseract
 import numpy as np
-from identify_color import identify_color
-from ocr_with_multiple_psms import ocr_with_multiple_psms
+from MainApp.identify_color import identify_color
+from MainApp.ocr_with_multiple_psms import ocr_with_multiple_psms
 
 def identify_numbers_colors(blurred,image, filtered_contours, w_smallest):
     number_color_list = []

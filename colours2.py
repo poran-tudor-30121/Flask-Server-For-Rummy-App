@@ -3,7 +3,6 @@ import logging
 import cv2
 import numpy as np
 import pytesseract
-from identify_color import identify_color
 
 
 def find_white_rectangles_in_binary(image, rectangular_contours):
@@ -41,7 +40,6 @@ def count_white_divisions(binary_image, rectangular_contours, w_smallest):
     return white_divisions_count
 
 
-from gamma_correction import gamma_correction
 from ocr_with_multiple_psms_first import ocr_with_multiple_psms_first
 
 # Configure logging

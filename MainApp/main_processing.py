@@ -1,15 +1,12 @@
 import asyncio
-import logging
-from concurrent.futures import ProcessPoolExecutor
 
 import numpy as np
 from collections import Counter
 
 import cv2
-from identify_color import identify_color
-from ocr_with_multiple_psms import ocr_with_multiple_psms
-from utilities import group_contours_by_height, draw_rectangles, split_and_rotate_image, show_sections
-from init_config import initialize_logging
+from MainApp.identify_color import identify_color
+from MainApp.ocr_with_multiple_psms import ocr_with_multiple_psms
+from utilities import group_contours_by_height, split_and_rotate_image
 
 
 def find_color(original_roi):
@@ -40,8 +37,6 @@ async def process_divisions_async(rectangular_contours, original_image, median_a
             thresh_roi = cv2.resize(thresh_roi, (300, 300))
             kernel = np.ones((3, 3), np.uint8)
             thresh_roi = cv2.dilate(thresh_roi, kernel)
-            #cv2.imshow("Roi",thresh_roi)
-            #cv2.waitKey(0)
 
             original_roi = original_image[y:y + int(h // 1.5), x_divided:x_divided + w_divided]
             color = find_color(original_roi)
@@ -61,7 +56,6 @@ async def process_divisions_async(rectangular_contours, original_image, median_a
         i += 1
 
     numbers_at_positions.append(current_run_numbers_and_colors)
-    #logger.info(current_run_numbers_and_colors)
 
 
 async def find_rectangular_contours_with_fixed_threshold(image, logger):
@@ -69,22 +63,13 @@ async def find_rectangular_contours_with_fixed_threshold(image, logger):
     numbers_at_positions = []
     tasks = []
     thresh_max_value = 255
-    continue_count = 0
     max_number_of_rectangles = 0
     formations = []
     logger.info(f'Picture being proccesed ')
     for thresh_value in range(100, thresh_max_value, 1):
-        if continue_count > 0:
-            continue_count -= 1
-            if continue_count == 0:
-                break
         _, thresh = cv2.threshold(gray, thresh_value, 255, cv2.THRESH_BINARY)
         median = cv2.medianBlur(thresh, 7)
-        #cv2.imshow("median", median)
-        #cv2.waitKey(0)
-        #cv2.destroyAllWindows()
         contours, _ = cv2.findContours(median, cv2.RETR_LIST, cv2.CHAIN_APPROX_TC89_KCOS)
-
         filtered_contours = [cnt for cnt in contours if
                              10000 < cv2.contourArea(cnt) < (image.shape[1] * image.shape[0]) / 2]
 
@@ -103,23 +88,8 @@ async def find_rectangular_contours_with_fixed_threshold(image, logger):
         if max_number_of_rectangles <= len(rectangular_contours):
             max_number_of_rectangles = len(rectangular_contours)
             formations = rectangular_contours
-
-        # Sort rectangular contours based on area and select the top 10
-        #if len(rectangular_contours) != target_num_rectangles:
-            #continue  # Skip to the next threshold if the count doesn't match the target
-        # Check if all heights are approximately the same
-        #height_threshold = 20  # You can adjust this threshold as needed
-        #if max(heights) - min(heights) >= height_threshold:
-            #logger.error("Rectangles do not have approximately the same height.")
-            #continue
-       # else:
     if len(formations) <= 1:
         return []
-    #draw_rectangles(image, formations)
-    #cv2.imshow("Image with rectangles", image)
-    #cv2.waitKey(0)
-    #cv2.destroyAllWindows()
-    continue_count = 1
     for thresh_adaptive_parameter in range(31, 121, 10):
         thresh_adaptive = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, thresh_adaptive_parameter, 2)
         blurred_adaptive = cv2.GaussianBlur(thresh_adaptive, (3, 3), 0)
@@ -128,7 +98,6 @@ async def find_rectangular_contours_with_fixed_threshold(image, logger):
 
     # Wait for all tasks to complete
     await asyncio.gather(*tasks)
-    # Filter out current_run_numbers that are longer or shorter than the mode length
     if numbers_at_positions:
         lengths = [len(numbers) for numbers in numbers_at_positions]
         mode_length = Counter(lengths).most_common(1)[0][0]
@@ -162,7 +131,6 @@ async def find_rectangular_contours_with_fixed_threshold(image, logger):
 async def process_image_for_all_players(image_path, logger):
 
     image = cv2.imread(image_path)
-    #image = cv2.resize(image, (1980, 1080))
     sections = split_and_rotate_image(image)
 
     i = 0
@@ -171,17 +139,13 @@ async def process_image_for_all_players(image_path, logger):
     for section_name, section_image in sections.items():
         tasks.append(asyncio.create_task(find_rectangular_contours_with_fixed_threshold(section_image, logger)))
 
-    # Wait for all tasks to complete concurrently
     results_list = await asyncio.gather(*tasks)
 
     return results_list
 
 async def process_image_for_some_players(image_path, logger, wanted_sections):
     image = cv2.imread(image_path)
-    #image = cv2.resize(image, (1980, 1080))
     sections = split_and_rotate_image(image)
-    #show_sections(sections)
-
     tasks = []
     results_map = {section_name: None for section_name in wanted_sections}
 
